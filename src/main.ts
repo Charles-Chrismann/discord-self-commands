@@ -2,6 +2,7 @@ import 'dotenv/config'
 import WebSocket from 'ws';
 import { ChildProcessWithoutNullStreams, spawn } from 'child_process'
 import { EventEmitter } from 'events';
+import DiscordWsClient from './DiscordWsClient';
 
 const PREFIX = process.env.COMMAND_PREFIX
 
@@ -10,13 +11,13 @@ pathEmitter.on('path', () => {
   child.stdin.write(cmd + '\n')
 })
 
-let hbId: NodeJS.Timeout
-let lastSequence: null | any = null
-function heartbeat(time: number) {
-  if (hbId) clearInterval(hbId)
-  console.log('stating heartbeat')
-  hbId = setInterval(() => ws.send(JSON.stringify({ op: 1, d: lastSequence })), time)
-}
+// let hbId: NodeJS.Timeout
+// let lastSequence: null | number = null
+// function heartbeat(time: number) {
+//   if (hbId) clearInterval(hbId)
+//   console.log('stating heartbeat')
+//   hbId = setInterval(() => ws.send(JSON.stringify({ op: 1, d: lastSequence })), time)
+// }
 
 async function postResponse(d: any) {
   const log = d.toString()
@@ -43,6 +44,12 @@ async function react() {
   })).text()
   console.log(res)
 }
+
+// let ws: WebSocket
+
+// let resume_gateway_url: string
+// let session_id: string
+// let s: string
 
 let isGettingPWD: boolean
 let currentPWD: string
@@ -99,49 +106,59 @@ function handleInteraction(data: any) {
   }
 }
 
-function connect() {
-  ws.send(JSON.stringify({
-    op: 2,
-    d: {
-      token: process.env.DISCORD_TOKEN,
-      properties: {
-        "os": "linux",
-        "browser": "disco",
-        "device": "disco"
-      },
-      intents: 512
-    }
-  }))
-}
+// function connect() {
+//   ws.send(JSON.stringify({
+//     op: 2,
+//     d: {
+//       token: process.env.DISCORD_TOKEN,
+//       properties: {
+//         "os": "linux",
+//         "browser": "disco",
+//         "device": "disco"
+//       },
+//       intents: 512
+//     }
+//   }))
+// }
 
-const ws = new WebSocket('wss://gateway.discord.gg');
-ws.on('error',(err: unknown) => {
-  console.error(err)
-  connect()
-});
-ws.on('close', (data) => {
-  console.log('Connexion closed', data)
-  connect()
-});
-ws.on('open', connect)
-ws.on('message', (raw) => {
-  const data = JSON.parse(raw as unknown as string)
+// function setupWs(gateway_url = 'wss://gateway.discord.gg') {
+//   ws = new WebSocket(gateway_url);
+//   ws.on('error',(err: unknown) => {
+//     console.error(err)
+//     connect()
+//   });
+//   ws.on('close', (data) => {
+//     console.log('Connexion closed', data)
+//     connect()
+//   });
+//   ws.on('open', connect)
+//   ws.on('message', (raw) => {
+//     const data = JSON.parse(raw as unknown as string)
+//     console.log(data.op)
+//     console.log(data)
+  
+//     switch (data.op) {
+//       case 0:
+//         s = data.s
+//         switch (data.t) {
+//           case 'MESSAGE_CREATE':
+//             resume_gateway_url = data.d.resume_gateway_url
+//             session_id = data.d.session_id
+//             break;
+//           case 'MESSAGE_CREATE':
+//             if (data.d.author.id !== process.env.SELF_DISCORD_ID) return
+//             handleInteraction(data)
+//             break;
+//         }
+//         break;
+//       case 1:
+//         lastSequence = data.d
+//         break;
+//       case 10:
+//         heartbeat(data.d.heartbeat_interval)
+//         break;
+//     }
+//   })
+// }
 
-  switch (data.op) {
-    case 0:
-      switch (data.t) {
-        case 'MESSAGE_CREATE':
-          if (data.d.author.id !== process.env.SELF_DISCORD_ID) return
-          handleInteraction(data)
-          break;
-      }
-      break;
-    case 1:
-      lastSequence = data.d
-      break;
-    case 10:
-      heartbeat(data.d.heartbeat_interval)
-      break;
-  }
-})
-
+const discordWsClient = new DiscordWsClient(handleInteraction)
