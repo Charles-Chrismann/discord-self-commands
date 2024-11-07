@@ -24,6 +24,7 @@ export default class DiscordWsClient {
       console.log('Connexion closed', data)
     });
     this.ws.on('open', () => {
+      console.log(`CONNECTED TO: ${this.ws.url}`)
       if(this.state !== 'RECONNECTING') return
       this.ws.send(JSON.stringify({
         "op": 6,
@@ -36,8 +37,8 @@ export default class DiscordWsClient {
     })
     this.ws.on('message', (raw) => {
       const data = JSON.parse(raw as unknown as string)
-      console.log(data.op)
-      // console.log(data)
+      if(process.env.LOG_OP === "true") console.log(data.op)
+      if(process.env.LOG_DATA === "true") console.log(data)
 
       switch (data.op) {
         case 0:
