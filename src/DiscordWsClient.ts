@@ -19,9 +19,11 @@ export default class DiscordWsClient {
     this.ws = new WebSocket(gateway_url || 'wss://gateway.discord.gg');
     this.ws.on('error', (err: unknown) => {
       console.log('Ws error', err)
+      this.initWs(this.resume_gateway_url ?? undefined)
     });
     this.ws.on('close', (data) => {
       console.log('Connexion closed', data)
+      this.initWs(this.resume_gateway_url ?? undefined)
     });
     this.ws.on('open', () => {
       console.log(`CONNECTED TO: ${this.ws.url}`)
